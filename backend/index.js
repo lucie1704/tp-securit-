@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
+const sanitize = require('mongo-sanitize');
 
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/tpdb';
 
@@ -34,12 +35,11 @@ app.post('/login-vulnerable', async (req, res) => {
 
 app.post('/login-safe', async (req, res) => {
   const { username, password } = req.body;
-
-  if (typeof username !== 'string' || typeof password !== 'string') {
-    return res.status(400).send("Format invalide");
-  }
-
-  const user = await User.findOne({ username, password });
+  
+  // Nettoie automatiquement les objets contenant des opérateurs MongoDB
+  const cleanData = sanitize({ username, password });
+  
+  const user = await User.findOne(cleanData);
   if (user) return res.send("Bienvenue (login sécurisé)");
   res.status(401).send("Échec d'authentification");
 });

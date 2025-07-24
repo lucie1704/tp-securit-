@@ -14,10 +14,15 @@ services:
       - "443:443"
     volumes:
       - ./certs:/certs
+      - ./backend:/app
+      - ./frontend:/app/frontend
+      - /app/node_modules
     environment:
       - MONGO_URL=mongodb://mongo:27017/tpdb
+      - NODE_ENV=development
     depends_on:
       - mongo
+    command: sh -c "npm install && node index.js"
 
 volumes:
   mongo-data:

@@ -1,5 +1,11 @@
 # TP Sécurité Web – Application Express avec vulnérabilité NoSQL
 
+## Membres du projet
+- **Victor GRANDIN**
+- **Lucie GODARD**
+
+---
+
 ## 1. Objectif du TP
 
 L'objectif de ce TP est de :
