@@ -1,0 +1,21 @@
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  app:
+    build: ./backend
+    ports:
+      - "443:443"
+    volumes:
+      - ./certs:/certs
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/tpdb
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:
