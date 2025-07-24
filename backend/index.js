@@ -3,9 +3,17 @@ const https = require('https');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/tpdb';
-mongoose.connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Connexion MongoDB avec gestion d'erreur
+mongoose.connect(MONGO_URL)
+  .then(() => console.log('Connecté à MongoDB'))
+  .catch(err => {
+    console.error('Erreur de connexion MongoDB:', err.message);
+    console.log('Assurez-vous que MongoDB est démarré ou utilisez: docker-compose up mongo');
+  });
 
 const User = mongoose.model('User', new mongoose.Schema({
   username: String,
@@ -17,39 +25,74 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// 🔴 VULNÉRABLE : NoSQL injection possible ici
 app.post('/login-vulnerable', async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username, password }); // Pas de validation !
-  if (user) return res.send("✅ Bienvenue !");
-  res.status(401).send("❌ Échec d'authentification");
+  const user = await User.findOne({ username, password }); 
+  if (user) return res.send("Bienvenue !");
+  res.status(401).send("Échec d'authentification");
 });
 
-// ✅ REMÉDIATION
 app.post('/login-safe', async (req, res) => {
   const { username, password } = req.body;
 
-  // Vérification type (protège contre les injections objets)
   if (typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).send("Format invalide");
   }
 
   const user = await User.findOne({ username, password });
-  if (user) return res.send("✅ Bienvenue (login sécurisé)");
-  res.status(401).send("❌ Échec d'authentification");
+  if (user) return res.send("Bienvenue (login sécurisé)");
+  res.status(401).send("Échec d'authentification");
 });
 
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
   await User.create({ username, password });
-  res.send("👤 Utilisateur enregistré");
+  res.send("Utilisateur enregistré");
 });
 
-const httpsOptions = {
-  key: fs.readFileSync('/certs/localhost-key.pem'),
-  cert: fs.readFileSync('/certs/localhost.pem')
-};
-
-https.createServer(httpsOptions, app).listen(443, () => {
-  console.log('🚀 Serveur HTTPS sur https://localhost');
+// Routes statiques et page d'accueil
+app.use(express.static(path.join(__dirname, 'frontend')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/index.html'));
 });
+
+// Créer un utilisateur par défaut au démarrage
+async function createDefaultUser() {
+  try {
+    const existingUser = await User.findOne({ username: 'admin' });
+    if (!existingUser) {
+      await User.create({ username: 'admin', password: 'admin123' });
+      console.log('Utilisateur par défaut créé: admin/admin123');
+    } else {
+      console.log('Utilisateur par défaut existe déjà');
+    }
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'utilisateur par défaut:', error);
+  }
+}
+
+// Démarrer le serveur HTTPS
+function startServer() {
+  const certPath = path.join(__dirname, '../certs');
+  const keyPath = path.join(certPath, 'localhost-key.pem');
+  const certFilePath = path.join(certPath, 'localhost.pem');
+  
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certFilePath)) {
+    console.error('Certificats SSL manquants dans le dossier certs/');
+    console.error('Générez-les avec: openssl req -x509 -newkey rsa:4096 -keyout certs/localhost-key.pem -out certs/localhost.pem -days 365 -nodes -subj "/C=FR/ST=IDF/L=Paris/O=Dev/CN=localhost"');
+    process.exit(1);
+  }
+  
+  // Mode HTTPS obligatoire
+  const httpsOptions = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certFilePath)
+  };
+  
+  https.createServer(httpsOptions, app).listen(443, () => {
+    console.log('Serveur HTTPS sur https://localhost');
+    createDefaultUser();
+  });
+}
+
+startServer();

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Injection NoSQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .test-info {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .test-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .credentials {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .vulnerable {
+            border-top: 4px solid #dc3545;
+        }
+
+        .secure {
+            border-top: 4px solid #28a745;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .vulnerable h2 {
+            color: #dc3545;
+        }
+
+        .secure h2 {
+            color: #28a745;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .btn-vulnerable {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-secure {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            min-height: 20px;
+        }
+
+        .response.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .response.info {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+        }
+
+        .explanation {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .explanation h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .payload {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Test d'Injection NoSQL</h1>
+
+    <div class="test-info">
+        <h3>Test d'injection NoSQL</h3>
+        <p>Deux endpoints identiques : un vulnérable, un corrigé. Testez l'injection sur les deux pour voir la différence.</p>
+        <div class="credentials">
+            Utilisateur de test : admin / admin123
+        </div>
+        <p><strong>Injection à tester :</strong> <code>{"$ne": null}</code> dans les deux champs (username et password).</p>
+    </div>
+
+    <div class="container">
+        <div class="panel vulnerable">
+            <h2>Version Vulnérable (/login-vulnerable)</h2>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="vuln-username">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="text" id="vuln-password">
+            </div>
+            <button class="btn btn-vulnerable" onclick="testLogin('vulnerable')">Tester la connexion</button>
+            <div id="vuln-response" class="response"></div>
+        </div>
+
+        <div class="panel secure">
+            <h2>Version Sécurisée (/login-safe)</h2>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="safe-username">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="text" id="safe-password">
+            </div>
+            <button class="btn btn-secure" onclick="testLogin('safe')">Tester la connexion</button>
+            <div id="safe-response" class="response"></div>
+        </div>
+    </div>
+
+    <div class="explanation">
+        <h3>Principe de l'attaque</h3>
+        <div class="payload">
+            {"username": {"$ne": null}, "password": {"$ne": null}}
+        </div>
+        <p>L'injection exploite l'absence de validation des types d'entrée. Au lieu d'envoyer une string, on envoie un objet JSON contenant un opérateur MongoDB.</p>
+        
+        <p><code>$ne</code> signifie "not equal". La condition <code>{"$ne": null}</code> retourne tous les utilisateurs dont le champ n'est pas null. MongoDB trouve le premier utilisateur et accepte la connexion.</p>
+        
+        <p>Correction : vérification <code>typeof username !== 'string'</code> avant la requête MongoDB.</p>
+    </div>
+
+    <script>
+        // Créer un utilisateur de test au chargement
+        window.onload = function() {
+            fetch('https://localhost/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: 'admin', password: 'admin'})
+            }).catch(() => {});
+        };
+
+        async function testLogin(type) {
+            const endpoint = type === 'vulnerable' ? '/login-vulnerable' : '/login-safe';
+            const responseId = type === 'vulnerable' ? 'vuln-response' : 'safe-response';
+            const responseDiv = document.getElementById(responseId);
+            
+            const usernameField = type === 'vulnerable' ? 'vuln-username' : 'safe-username';
+            const passwordField = type === 'vulnerable' ? 'vuln-password' : 'safe-password';
+            
+            const usernameValue = document.getElementById(usernameField).value;
+            const passwordValue = document.getElementById(passwordField).value;
+            
+            let payload;
+            
+            // Si l'utilisateur tape la payload d'injection, la parser comme JSON
+            if (usernameValue.includes('$ne') && passwordValue.includes('$ne')) {
+                try {
+                    payload = {
+                        username: JSON.parse(usernameValue),
+                        password: JSON.parse(passwordValue)
+                    };
+                } catch (e) {
+                    responseDiv.textContent = 'Erreur de format JSON';
+                    responseDiv.className = 'response error';
+                    return;
+                }
+            } else {
+                // Sinon, traiter comme des strings normales
+                payload = {
+                    username: usernameValue,
+                    password: passwordValue
+                };
+            }
+            
+            responseDiv.textContent = 'Test en cours...';
+            responseDiv.className = 'response info';
+
+            try {
+                const response = await fetch(`https://localhost${endpoint}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    responseDiv.textContent = result;
+                    responseDiv.className = 'response success';
+                } else {
+                    responseDiv.textContent = result;
+                    responseDiv.className = 'response error';
+                }
+            } catch (error) {
+                responseDiv.textContent = 'Erreur: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+    </script>
+</body>
+</html>

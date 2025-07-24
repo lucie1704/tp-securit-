@@ -1,7 +1,8 @@
 FROM node:20
 
 WORKDIR /app
-COPY . .
+COPY backend/ .
+COPY frontend/ ./frontend
 
 RUN npm install
 
