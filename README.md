@@ -42,7 +42,6 @@ L'application est accessible sur : **https://localhost**
 ### Développement local
 Le `Caddyfile` est configuré pour :
 - **HTTPS automatique** avec certificats auto-signés
-- **Rate limiting** : 5 requêtes/minute sur les routes `/login*`
 - **Headers de sécurité** : HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 - **Reverse proxy** vers l'app sur le port 3000
 
