@@ -8,7 +8,6 @@ const sanitize = require('mongo-sanitize');
 
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/tpdb';
 
-// Connexion MongoDB avec gestion d'erreur
 mongoose.connect(MONGO_URL)
   .then(() => console.log('Connecté à MongoDB'))
   .catch(err => {
@@ -36,15 +35,12 @@ app.post('/login-vulnerable', async (req, res) => {
 app.post('/login-safe', async (req, res) => {
   const { username, password } = req.body;
   
-  // Validation basique avant sanitisation
   if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
     return res.status(401).send("Échec d'authentification");
   }
   
-  // Nettoie automatiquement les objets contenant des opérateurs MongoDB
   const cleanData = sanitize({ username, password });
   
-  // Si la sanitisation a vidé les champs, on rejette
   if (!cleanData.username || !cleanData.password) {
     return res.status(401).send("Échec d'authentification");
   }
@@ -60,13 +56,11 @@ app.post('/register', async (req, res) => {
   res.send("Utilisateur enregistré");
 });
 
-// Routes statiques et page d'accueil
 app.use(express.static(path.join(__dirname, 'frontend')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/index.html'));
 });
 
-// Créer un utilisateur par défaut au démarrage
 async function createDefaultUser() {
   try {
     const existingUser = await User.findOne({ username: 'admin' });
@@ -81,7 +75,6 @@ async function createDefaultUser() {
   }
 }
 
-// Démarrer le serveur HTTPS
 function startServer() {
   const certPath = path.join(__dirname, 'certs');
   const keyPath = path.join(certPath, 'localhost-key.pem');
@@ -93,7 +86,6 @@ function startServer() {
     process.exit(1);
   }
   
-  // Mode HTTPS obligatoire
   const httpsOptions = {
     key: fs.readFileSync(keyPath),
     cert: fs.readFileSync(certFilePath)
