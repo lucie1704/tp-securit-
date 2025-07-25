@@ -7,7 +7,7 @@
 ## Objectif
 
 Démontrer une vulnérabilité d'injection NoSQL et implémenter une solution sécurisée avec :
-- Serveur HTTPS avec certificats auto-signés
+- Serveur HTTPS avec Caddy (auto-certificats)
 - API Express vulnérable et sécurisée
 - Interface web interactive pour tester les attaques
 - Base de données MongoDB
@@ -21,24 +21,36 @@ tp-securite/
 │   └── package.json      # Dépendances Node.js
 ├── frontend/
 │   └── index.html        # Interface web de test
-├── certs/                # Certificats SSL (à générer)
+├── Caddyfile             # Configuration Caddy (HTTPS + sécurité)
 ├── compose.yaml          # Configuration Docker
 └── README.md
 ```
 
 ## Installation et lancement
 
-### 1. Générer les certificats SSL
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout certs/localhost-key.pem -out certs/localhost.pem -days 365 -nodes -subj "/C=FR/ST=IDF/L=Paris/O=Dev/CN=localhost"
-```
-
-### 2. Lancer avec Docker Compose
+### 1. Lancer avec Docker Compose
 ```bash
 docker-compose up
 ```
 
-L'application est accessible sur : **https://localhost**
+L'application est accessible sur : **https://localhost:3000**
+
+**Note** : Caddy génère automatiquement les certificats SSL auto-signés pour le développement local.
+
+## Configuration Caddy
+
+### Développement local
+Le `Caddyfile` est configuré pour :
+- **HTTPS automatique** avec certificats auto-signés
+- **Rate limiting** : 5 requêtes/minute sur les routes `/login*`
+- **Headers de sécurité** : HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
+- **Reverse proxy** vers l'app sur le port 3000
+
+### Production
+Pour déployer en production :
+1. Décommentez la section production dans `Caddyfile`
+2. Remplacez `votre-domaine.com` par votre vrai domaine
+3. Caddy générera automatiquement des certificats Let's Encrypt
 
 ## Vulnérabilité NoSQL
 
@@ -51,10 +63,6 @@ const user = await User.findOne({ username, password });
 ### Route sécurisée : `/login-safe`
 ```javascript
 const cleanData = sanitize({ username, password });
-
-if (!cleanData.username || !cleanData.password) {
-  return res.status(401).send("Échec d'authentification");
-}
 ```
 **Solution** : Sanitisation (retire les injections des données)
 
@@ -76,8 +84,3 @@ curl -k -X POST https://localhost/login-safe \
   -H "Content-Type: application/json" \
   -d '{"username": {"$ne": null}, "password": {"$ne": null}}'
 ```
-
-### Interface web
-1. Ouvrir https://localhost
-2. Accepter l'avertissement de sécurité causé par le certificat SSL auto signé (normal comme on est en local)
-3. Tester les deux versions avec les identifiants utilisateur correctes et avec l'injection et comparer le résultat

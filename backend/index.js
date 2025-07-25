@@ -91,8 +91,8 @@ function startServer() {
     cert: fs.readFileSync(certFilePath)
   };
   
-  https.createServer(httpsOptions, app).listen(443, () => {
-    console.log('Serveur HTTPS sur https://localhost');
+  https.createServer(httpsOptions, app).listen(3000, () => {
+    console.log('Serveur HTTPS sur https://localhost:3000');
     createDefaultUser();
   });
 }

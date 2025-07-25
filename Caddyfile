@@ -1,0 +1,31 @@
+# Pour local avec auto-certificats
+localhost {
+    reverse_proxy app:3000
+    
+    # Rate limiting sur login
+    @login path /login*
+    rate_limit @login 5r/m
+    
+    # Headers de sécurité
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+    }
+}
+
+# Pour production avec Let's Encrypt
+# votre-domaine.com {
+#     reverse_proxy app:3000
+#     
+#     @login path /login*
+#     rate_limit @login 5r/m
+#     
+#     header {
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains"
+#         X-Content-Type-Options "nosniff"
+#         X-Frame-Options "SAMEORIGIN"
+#         X-XSS-Protection "1; mode=block"
+#     }
+# } 
