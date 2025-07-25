@@ -33,9 +33,9 @@ tp-securite/
 docker-compose up
 ```
 
-L'application est accessible sur : **https://localhost:3000**
+L'application est accessible sur : **https://localhost**
 
-**Note** : Caddy génère automatiquement les certificats SSL auto-signés pour le développement local.
+**Note importante** : Caddy génère automatiquement des certificats SSL auto-signés pour le développement local. Votre navigateur affichera un avertissement de sécurité (`net::ERR_CERT_AUTHORITY_INVALID`) - c'est **normal** car le certificat n'est pas émis par une autorité de certification reconnue. Cliquez sur "Avancé" puis "Continuer vers localhost" pour accéder à l'application.
 
 ## Configuration Caddy
 

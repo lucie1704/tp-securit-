@@ -273,7 +273,7 @@
             responseDiv.className = 'response info';
 
             try {
-                const response = await fetch(`https://localhost:3000${endpoint}`, {
+                const response = await fetch(`https://localhost${endpoint}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
