@@ -1,5 +1,3 @@
-const fs = require('fs');
-const https = require('https');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -76,23 +74,8 @@ async function createDefaultUser() {
 }
 
 function startServer() {
-  const certPath = path.join(__dirname, 'certs');
-  const keyPath = path.join(certPath, 'localhost-key.pem');
-  const certFilePath = path.join(certPath, 'localhost.pem');
-  
-  if (!fs.existsSync(keyPath) || !fs.existsSync(certFilePath)) {
-    console.error('Certificats SSL manquants dans le dossier certs/');
-    console.error('Générez-les avec: openssl req -x509 -newkey rsa:4096 -keyout certs/localhost-key.pem -out certs/localhost.pem -days 365 -nodes -subj "/C=FR/ST=IDF/L=Paris/O=Dev/CN=localhost"');
-    process.exit(1);
-  }
-  
-  const httpsOptions = {
-    key: fs.readFileSync(keyPath),
-    cert: fs.readFileSync(certFilePath)
-  };
-  
-  https.createServer(httpsOptions, app).listen(3000, () => {
-    console.log('Serveur HTTPS sur https://localhost:3000');
+  app.listen(3000, () => {
+    console.log('Serveur HTTP sur http://localhost:3000');
     createDefaultUser();
   });
 }

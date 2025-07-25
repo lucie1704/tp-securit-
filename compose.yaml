@@ -15,7 +15,6 @@ services:
       - ./backend/package.json:/app/package.json
       - ./backend/index.js:/app/index.js
       - ./frontend:/app/frontend
-      - ./certs:/app/certs
       - /app/node_modules
     environment:
       - MONGO_URL=mongodb://mongo:27017/tpdb
