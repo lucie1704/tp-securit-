@@ -36,11 +36,21 @@ app.post('/login-vulnerable', async (req, res) => {
 app.post('/login-safe', async (req, res) => {
   const { username, password } = req.body;
   
+  // Validation basique avant sanitisation
+  if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(401).send("Échec d'authentification");
+  }
+  
   // Nettoie automatiquement les objets contenant des opérateurs MongoDB
   const cleanData = sanitize({ username, password });
   
+  // Si la sanitisation a vidé les champs, on rejette
+  if (!cleanData.username || !cleanData.password) {
+    return res.status(401).send("Échec d'authentification");
+  }
+  
   const user = await User.findOne(cleanData);
-  if (user) return res.send("Bienvenue (login sécurisé)");
+  if (user) return res.send("Bienvenue !");
   res.status(401).send("Échec d'authentification");
 });
 
@@ -73,7 +83,7 @@ async function createDefaultUser() {
 
 // Démarrer le serveur HTTPS
 function startServer() {
-  const certPath = path.join(__dirname, '../certs');
+  const certPath = path.join(__dirname, 'certs');
   const keyPath = path.join(certPath, 'localhost-key.pem');
   const certFilePath = path.join(certPath, 'localhost.pem');
   

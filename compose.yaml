@@ -7,19 +7,18 @@ services:
       - mongo-data:/data/db
 
   app:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    image: node:20-alpine
+    working_dir: /app
     ports:
       - "443:443"
     volumes:
-      - ./certs:/certs
-      - ./backend:/app
+      - ./backend/package.json:/app/package.json
+      - ./backend/index.js:/app/index.js
       - ./frontend:/app/frontend
+      - ./certs:/app/certs
       - /app/node_modules
     environment:
       - MONGO_URL=mongodb://mongo:27017/tpdb
-      - NODE_ENV=development
     depends_on:
       - mongo
     command: sh -c "npm install && node index.js"
